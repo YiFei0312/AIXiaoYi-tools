@@ -5,6 +5,6 @@ numpy~=1.21
 azure-cognitiveservices-speech~=1.38.0
 python-vlc~=3.0.20123
 comtypes~=1.4.5
-pycaw~=20240210
+pycaw
 parsel~=1.9.1
 prettytable~=3.10.0
