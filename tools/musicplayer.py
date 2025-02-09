@@ -88,11 +88,11 @@ class MusicPlayer:
         song_list = []
         for row in rows:
             # 提取歌名
-            SongName = row.css('a.text-primary::text').get().strip()
+            SongName = row.css('span.text-primary.font-weight-bolder.music-title span::text').get().strip()
             # 提取ID
-            SongId = row.css('a.text-primary::attr(href)').get().split('/')[-1]
+            SongId = row.css('a.music-link::attr(href)').get().split('/')[-1]
             # 提取歌手
-            Singer = row.css('.text-success::text').get().strip()
+            Singer = row.css('small.text-jade.font-weight-bolder.align-middle::text').get().strip()
             # 创建一个字典来存储歌曲信息
             song_info = {'id': SongId, 'name': SongName, 'singer': Singer}
             # 将字典添加到列表中
@@ -103,15 +103,41 @@ class MusicPlayer:
             print('歌手名:', Singer)
         first_song_id = song_list[0]['id'] if song_list else None
         # 请求网址
-        url = f'https://www.gequbao.com/api/play_url?id={first_song_id}&json=1'
+        url = f'https://www.gequbao.com/music/{first_song_id}'
         # 发送请求
         response = requests.get(url=url, headers=headers)
+        try:
+            selector = parsel.Selector(response.text)
+
+            # 查找所有的<script>标签
+            scripts = selector.css('script::text').getall()
+
+            # 定义正则表达式来匹配play_id
+            import re
+            pattern = re.compile(r"window\.play_id\s*=\s*'([^']+)'")
+
+            # 遍历所有的<script>标签内容，查找目标JavaScript代码
+            for script in scripts:
+                match = pattern.search(script)
+                if match:
+                    play_id = match.group(1)
+                    print("找到了play_id:", play_id)
+        except:
+            print("筛选playid失败")
         # 获取响应json数据
-        json_data = response.json()
-        # 提取歌曲链接
-        play_url = json_data['data']['url']
-        print('播放地址:', play_url)
-        return play_url
+        try:
+            # 请求网址
+            url = f'https://www.gequbao.com/api/play-url'
+            # 发送请求
+            response = requests.post(url=url, headers=headers,data={'id': play_id})
+            json_data = response.json()
+            # 提取歌曲链接
+            play_url = json_data['data']['url']
+            print('播放地址:', play_url)
+            return play_url
+        except ValueError as e:
+            print(f"JSON 解析错误: {e}")
+            return None
 
 
 music_player = MusicPlayer()
